@@ -10,6 +10,45 @@ struct Point {
   y: i32
 }
 
+struct Bound {
+  min: Point,
+  max: Point
+}
+
+impl Point {
+  fn offset_x(&self, offset: &i32) -> Point {
+    Point { x: self.x + offset, y: self.y }
+  }
+
+  fn offset_y(&self, offset: &i32) -> Point {
+    Point { x: self.x, y: self.y + offset }
+  }
+
+  fn offset(&self, offset: &Point) -> Point {
+    Point { x: self.x + offset.x, y: self.y + offset.y }
+  }
+}
+
+enum Contains {
+  DoesContain,
+  DoesNotContain
+}
+
+impl Bound{
+  fn contains(&self, point: Point) -> Contains {
+    if
+      point.x >= self.min.x &&
+      point.x <= self.max.x &&
+      point.y >= self.min.y &&
+      point.y <= self.max.y
+    {
+      Contains::DoesContain
+    } else {
+      Contains::DoesNotContain
+    }
+  }
+}
+
 fn render(con: &mut RootConsole, c_point: &Point, d_point: &Point) {
   con.clear();
   con.put_char(c_point.x, c_point.y, '@', BackgroundFlag::Set);
@@ -20,12 +59,13 @@ fn render(con: &mut RootConsole, c_point: &Point, d_point: &Point) {
 fn main() {
   let mut between = Range::new(0, 3i32);
   let mut rng = rand::thread_rng();
-  let con_x = 80i32;
-  let con_y = 50i32;
+  let window_bounds = Bound { min: Point { x:  0, y:  0 }
+                            , max: Point { x: 79, y: 49 }
+                            };
   let mut char_point = Point { x: 40, y: 25 };
   let mut dog_point  = Point { x: 10, y: 10 };
   let mut con = RootConsole::initializer()
-    .size(con_x, con_y)
+    .size(window_bounds.max.x+1, window_bounds.max.y+1)
     .title("libtcod Rust tutorial")
     .init();
   let mut exit = false;
@@ -35,39 +75,39 @@ fn main() {
     let keypress = con.wait_for_keypress(true);
 
     // update game state
+    let mut offset = Point { x: 0, y: 0 };
     match keypress.key {
       Special(Escape) => exit = true,
       Special(Up)     => {
-        if char_point.y >= 1 {
-          char_point.y -= 1;
-        }
+        offset.y = -1;
       },
       Special(Down)   => {
-        if char_point.y < (con_y -1) {
-          char_point.y += 1;
-        }
+        offset.y = 1;
       },
       Special(Left) => {
-        if char_point.x >= 1 {
-          char_point.x -= 1;
-        }
+        offset.x = -1;
       },
       Special(Right) => {
-        if char_point.x < (con_x - 1) {
-          char_point.x += 1;
-        }
+        offset.x = 1;
       },
       _               => {}
     }
 
+    match window_bounds.contains(char_point.offset(&offset)) {
+      Contains::DoesContain    => char_point = char_point.offset(&offset),
+      Contains::DoesNotContain => {}
+    }
+
     let offset_x = between.sample(&mut rng) - 1;
-    if(dog_point.x + offset_x) > 0 && (dog_point.x + offset_x) < (con_x - 1){
-      dog_point.x += offset_x;
+    match window_bounds.contains(dog_point.offset_x(&offset_x)) {
+      Contains::DoesContain    => dog_point = dog_point.offset_x(&offset_x),
+      Contains::DoesNotContain => {}
     }
 
     let offset_y = between.sample(&mut rng) - 1;
-    if(dog_point.y + offset_y) > 0 && (dog_point.y + offset_y) < (con_y -1){
-      dog_point.y += offset_y;
+    match window_bounds.contains(dog_point.offset_y(&offset_y)) {
+      Contains::DoesContain    => dog_point = dog_point.offset_y(&offset_y),
+      Contains::DoesNotContain => {}
     }
 
     // render
