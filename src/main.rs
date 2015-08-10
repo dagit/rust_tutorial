@@ -4,15 +4,11 @@ use rand::distributions::{Sample, Range};
 use tcod::{Console, RootConsole, BackgroundFlag};
 use tcod::input::Key::Special;
 use tcod::input::KeyCode::{Escape, Up, Down, Left, Right};
+use tcod::input::KeyState;
 
 struct Point {
   x: i32,
   y: i32
-}
-
-struct Bound {
-  min: Point,
-  max: Point
 }
 
 impl Point {
@@ -26,6 +22,92 @@ impl Point {
 
   fn offset(&self, offset: &Point) -> Point {
     Point { x: self.x + offset.x, y: self.y + offset.y }
+  }
+}
+
+struct Bound {
+  min: Point,
+  max: Point
+}
+
+struct Character {
+  position: Point,
+  display_char: char
+}
+
+impl Character {
+  fn new(x: i32, y: i32, dc: char) -> Character {
+    Character { position: Point { x: x, y: y }, display_char: dc }
+  }
+}
+
+struct NPC {
+  position: Point,
+  display_char: char
+}
+
+impl NPC {
+  fn new(x: i32, y: i32, dc: char) -> NPC {
+    NPC { position: Point { x: x, y: y }, display_char: dc }
+  }
+}
+
+trait Updates {
+  fn update(&mut self, KeyState, &Game);
+  fn render(&self, &mut RootConsole);
+}
+
+impl Updates for Character {
+  fn update(&mut self, keypress: KeyState, game: &Game){
+    let mut offset = Point { x: 0, y: 0 };
+    match keypress.key {
+      Special(Up) => {
+        offset.y = -1;
+      },
+      Special(Down) => {
+        offset.y = 1;
+      },
+      Special(Left) => {
+        offset.x = -1;
+      },
+      Special(Right) => {
+        offset.y = 1;
+      },
+      _ => {}
+    }
+
+    match game.window_bounds.contains(self.position.offset(&offset)){
+      Contains::DoesContain    => self.position = self.position.offset(&offset),
+      Contains::DoesNotContain => {}
+    }
+  }
+
+  fn render(&self, console: &mut RootConsole){
+    console.put_char(self.position.x, self.position.y,
+                     self.display_char, BackgroundFlag::Set);
+  }
+}
+
+impl Updates for NPC {
+  fn update(&mut self, keypress: KeyState, game: &Game){
+    let mut between = Range::new(0, 3i32);
+    let mut rng = rand::thread_rng();
+    let offset_x = between.sample(&mut rng) - 1;
+    match game.window_bounds.contains(self.position.offset_x(&offset_x)) {
+      Contains::DoesContain    => self.position = self.position.offset_x(&offset_x),
+      Contains::DoesNotContain => {}
+    }
+
+    let offset_y = between.sample(&mut rng) - 1;
+    match game.window_bounds.contains(self.position.offset_y(&offset_y)) {
+      Contains::DoesContain    => self.position = self.position.offset_y(&offset_y),
+      Contains::DoesNotContain => {}
+    }
+  }
+
+  fn render(&self, console: &mut RootConsole) {
+    console.put_char(self.position.x, self.position.y,
+                     self.display_char, BackgroundFlag::Set);
   }
 }
 
@@ -49,68 +131,49 @@ impl Bound{
   }
 }
 
-fn render(con: &mut RootConsole, c_point: &Point, d_point: &Point) {
+struct Game {
+  exit: bool,
+  window_bounds: Bound
+}
+
+fn render(con: &mut RootConsole, objs: &Vec<Box<Updates>>) {
   con.clear();
-  con.put_char(c_point.x, c_point.y, '@', BackgroundFlag::Set);
-  con.put_char(d_point.x, d_point.y, 'd', BackgroundFlag::Set);
+  for i in objs.iter() {
+    i.render(con);
+  }
   con.flush();
 }
 
+fn update(objs: &mut Vec<Box<Updates>>, keypress: KeyState, game: &Game) {
+  for i in objs.iter_mut() {
+    i.update(keypress, &game);
+  }
+}
+
 fn main() {
-  let mut between = Range::new(0, 3i32);
-  let mut rng = rand::thread_rng();
-  let window_bounds = Bound { min: Point { x:  0, y:  0 }
-                            , max: Point { x: 79, y: 49 }
-                            };
-  let mut char_point = Point { x: 40, y: 25 };
-  let mut dog_point  = Point { x: 10, y: 10 };
+  let mut game = Game { exit: false, window_bounds: Bound {
+    min: Point { x: 0, y: 0 }, max: Point { x: 79, y: 49 } } };
+  let c = Box::new(Character::new(40, 25, '@')) as Box<Updates>;
+  let d = Box::new(Character::new(10, 10, 'd')) as Box<Updates>;
   let mut con = RootConsole::initializer()
-    .size(window_bounds.max.x+1, window_bounds.max.y+1)
+    .size(game.window_bounds.max.x+1, game.window_bounds.max.y+1)
     .title("libtcod Rust tutorial")
     .init();
-  let mut exit = false;
-  render(&mut con, &char_point, &dog_point);
-  while !(con.window_closed() || exit) {
+  let mut objs: Vec<Box<Updates>> = vec![ c, d ];
+  render(&mut con, &objs);
+  while !(con.window_closed() || game.exit) {
     // wait for user input
     let keypress = con.wait_for_keypress(true);
 
     // update game state
     let mut offset = Point { x: 0, y: 0 };
     match keypress.key {
-      Special(Escape) => exit = true,
-      Special(Up)     => {
-        offset.y = -1;
-      },
-      Special(Down)   => {
-        offset.y = 1;
-      },
-      Special(Left) => {
-        offset.x = -1;
-      },
-      Special(Right) => {
-        offset.x = 1;
-      },
+      Special(Escape) => game.exit = true,
       _               => {}
     }
-
-    match window_bounds.contains(char_point.offset(&offset)) {
-      Contains::DoesContain    => char_point = char_point.offset(&offset),
-      Contains::DoesNotContain => {}
-    }
-
-    let offset_x = between.sample(&mut rng) - 1;
-    match window_bounds.contains(dog_point.offset_x(&offset_x)) {
-      Contains::DoesContain    => dog_point = dog_point.offset_x(&offset_x),
-      Contains::DoesNotContain => {}
-    }
-
-    let offset_y = between.sample(&mut rng) - 1;
-    match window_bounds.contains(dog_point.offset_y(&offset_y)) {
-      Contains::DoesContain    => dog_point = dog_point.offset_y(&offset_y),
-      Contains::DoesNotContain => {}
-    }
+    update(&mut objs, keypress, &game);
 
     // render
-    render(&mut con, &char_point, &dog_point);
+    render(&mut con, &objs);
   }
 }
