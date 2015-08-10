@@ -5,3 +5,6 @@ authors = ["Jason Dagit <dagit@galois.com>"]
 
 [dependencies.tcod]
 git = "https://github.com/tomassedovic/tcod-rs.git"
+
+[dependencies]
+rand = "0.3"
