@@ -1,6 +1,7 @@
 extern crate tcod;
 extern crate rand;
 use rand::distributions::{Sample, Range};
+use rand::{ThreadRng};
 use tcod::{Console, RootConsole, BackgroundFlag};
 use tcod::input::Key::Special;
 use tcod::input::KeyCode::{Escape, Up, Down, Left, Right};
@@ -72,7 +73,7 @@ impl Updates for Character {
         offset.x = -1;
       },
       Special(Right) => {
-        offset.y = 1;
+        offset.x = 1;
       },
       _ => {}
     }
@@ -90,16 +91,15 @@ impl Updates for Character {
 }
 
 impl Updates for NPC {
-  fn update(&mut self, keypress: KeyState, game: &Game){
+  fn update(&mut self, _: KeyState, game: &Game){
     let mut between = Range::new(0, 3i32);
-    let mut rng = rand::thread_rng();
-    let offset_x = between.sample(&mut rng) - 1;
+    let offset_x = between.sample(&mut *game.rng.borrow_mut()) - 1;
     match game.window_bounds.contains(self.position.offset_x(&offset_x)) {
       Contains::DoesContain    => self.position = self.position.offset_x(&offset_x),
       Contains::DoesNotContain => {}
     }
 
-    let offset_y = between.sample(&mut rng) - 1;
+    let offset_y = between.sample(&mut *game.rng.borrow_mut()) - 1;
     match game.window_bounds.contains(self.position.offset_y(&offset_y)) {
       Contains::DoesContain    => self.position = self.position.offset_y(&offset_y),
       Contains::DoesNotContain => {}
@@ -134,7 +134,8 @@ impl Bound{
 
 struct Game {
   exit: bool,
-  window_bounds: Bound
+  window_bounds: Bound,
+  rng: RefCell<ThreadRng>
 }
 
 type Updatable<'a> = Box<RefCell<Updates + 'a>>;
@@ -162,10 +163,12 @@ fn main() {
     exit: false,
     window_bounds: Bound {
       min: Point { x: 0, y: 0 },
-      max: Point { x: 79, y: 49 } } };
+      max: Point { x: 79, y: 49 } },
+    rng: RefCell::new(rand::thread_rng())
+    };
   let objs: Vec<Updatable> = vec![
     mk_updatable(Character::new(40, 25, '@')),
-    mk_updatable(Character::new(10, 10, 'd')),
+    mk_updatable(NPC::new(10, 10, 'd')),
     ];
   let mut con = RootConsole::initializer()
     .size(game.window_bounds.max.x+1, game.window_bounds.max.y+1)
@@ -177,7 +180,6 @@ fn main() {
     let keypress = con.wait_for_keypress(true);
 
     // update game state
-    let mut offset = Point { x: 0, y: 0 };
     match keypress.key {
       Special(Escape) => game.exit = true,
       _               => {}
