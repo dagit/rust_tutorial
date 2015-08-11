@@ -6,7 +6,7 @@ use self::rand::distributions::{Sample, Range};
 use traits::Updates;
 use util::{Point, Contains};
 use game::Game;
-use rendering::TcodRenderingComponent;
+use rendering::RenderingComponent;
 
 pub struct NPC {
   pub position: Point,
@@ -35,7 +35,7 @@ impl Updates for NPC {
     }
   }
 
-  fn render(&self, rendering_component: &TcodRenderingComponent) {
+  fn render(&self, rendering_component: &RenderingComponent) {
     rendering_component.render_object(&self.position, self.display_char);
   }
 }

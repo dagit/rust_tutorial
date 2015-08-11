@@ -4,11 +4,11 @@ use std::cell::RefCell;
 use self::tcod::RootConsole;
 
 use game::Game;
-use rendering::TcodRenderingComponent;
+use rendering::RenderingComponent;
 
 pub trait Updates {
   fn update(&mut self, &Game);
-  fn render(&self, &TcodRenderingComponent);
+  fn render(&self, &RenderingComponent);
 }
 
 pub type Updatable<'a> = Box<RefCell<Updates + 'a>>;

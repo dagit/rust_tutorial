@@ -13,9 +13,9 @@ use rl::game::Game;
 use rl::character::Character;
 use rl::npc::NPC;
 use rl::traits::{Updates, Updatable, mk_updatable};
-use rl::rendering::TcodRenderingComponent;
+use rl::rendering::{RenderingComponent, TcodRenderingComponent};
 
-fn render<'a>(rendering_component: &TcodRenderingComponent,
+fn render<'a>(rendering_component: &RenderingComponent,
               npcs: &Vec<Updatable<'a>>,
               c: &Character) {
   rendering_component.before_render_new_frame();
