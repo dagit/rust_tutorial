@@ -5,6 +5,7 @@ use tcod::{Console, RootConsole, BackgroundFlag};
 use tcod::input::Key::Special;
 use tcod::input::KeyCode::{Escape, Up, Down, Left, Right};
 use tcod::input::KeyState;
+use std::cell::RefCell;
 
 struct Point {
   x: i32,
@@ -107,7 +108,7 @@ impl Updates for NPC {
 
   fn render(&self, console: &mut RootConsole) {
     console.put_char(self.position.x, self.position.y,
-                     self.display_char, BackgroundFlag::Set);
+             self.display_char, BackgroundFlag::Set);
   }
 }
 
@@ -136,30 +137,40 @@ struct Game {
   window_bounds: Bound
 }
 
-fn render(con: &mut RootConsole, objs: &Vec<Box<Updates>>) {
+type Updatable<'a> = Box<RefCell<Updates + 'a>>;
+
+fn mk_updatable<'a, Upd: Updates + 'a>(t: Upd) -> Updatable<'a> {
+  Box::new(RefCell::new(t)) as Box<RefCell<Updates>>
+}
+
+fn render<'a>(con: &mut RootConsole, objs: &Vec<Updatable<'a>>) {
   con.clear();
   for i in objs.iter() {
-    i.render(con);
+    i.borrow().render(con);
   }
   con.flush();
 }
 
-fn update(objs: &mut Vec<Box<Updates>>, keypress: KeyState, game: &Game) {
-  for i in objs.iter_mut() {
-    i.update(keypress, &game);
+fn update<'a>(objs: &Vec<Updatable<'a>>, keypress: KeyState, game: &Game) {
+  for i in objs.iter() {
+    i.borrow_mut().update(keypress, &game);
   }
 }
 
 fn main() {
-  let mut game = Game { exit: false, window_bounds: Bound {
-    min: Point { x: 0, y: 0 }, max: Point { x: 79, y: 49 } } };
-  let c = Box::new(Character::new(40, 25, '@')) as Box<Updates>;
-  let d = Box::new(Character::new(10, 10, 'd')) as Box<Updates>;
+  let mut game = Game {
+    exit: false,
+    window_bounds: Bound {
+      min: Point { x: 0, y: 0 },
+      max: Point { x: 79, y: 49 } } };
+  let objs: Vec<Updatable> = vec![
+    mk_updatable(Character::new(40, 25, '@')),
+    mk_updatable(Character::new(10, 10, 'd')),
+    ];
   let mut con = RootConsole::initializer()
     .size(game.window_bounds.max.x+1, game.window_bounds.max.y+1)
     .title("libtcod Rust tutorial")
     .init();
-  let mut objs: Vec<Box<Updates>> = vec![ c, d ];
   render(&mut con, &objs);
   while !(con.window_closed() || game.exit) {
     // wait for user input
@@ -171,7 +182,7 @@ fn main() {
       Special(Escape) => game.exit = true,
       _               => {}
     }
-    update(&mut objs, keypress, &game);
+    update(&objs, keypress, &game);
 
     // render
     render(&mut con, &objs);
