@@ -6,6 +6,7 @@ use self::tcod::input::KeyState;
 
 use util::{Point, Contains};
 use game::Game;
+use rendering::TcodRenderingComponent;
 
 pub struct Character {
   pub position: Point,
@@ -41,9 +42,8 @@ impl Character {
     }
   }
 
-  pub fn render(&self, console: &mut RootConsole){
-    console.put_char(self.position.x, self.position.y,
-                     self.display_char, BackgroundFlag::Set);
+  pub fn render(&self, rendering_component: &TcodRenderingComponent){
+    rendering_component.render_object(&self.position, self.display_char);
   }
 }
 

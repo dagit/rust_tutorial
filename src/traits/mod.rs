@@ -1,11 +1,14 @@
 extern crate tcod;
-use self::tcod::RootConsole;
-use game::Game;
 use std::cell::RefCell;
+
+use self::tcod::RootConsole;
+
+use game::Game;
+use rendering::TcodRenderingComponent;
 
 pub trait Updates {
   fn update(&mut self, &Game);
-  fn render(&self, &mut RootConsole);
+  fn render(&self, &TcodRenderingComponent);
 }
 
 pub type Updatable<'a> = Box<RefCell<Updates + 'a>>;
