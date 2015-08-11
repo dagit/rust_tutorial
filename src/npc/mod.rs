@@ -1,6 +1,5 @@
 extern crate tcod;
 extern crate rand;
-use self::tcod::{Console, RootConsole, BackgroundFlag};
 use self::rand::distributions::{Sample, Range};
 
 use traits::Updates;

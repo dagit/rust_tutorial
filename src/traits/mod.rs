@@ -1,8 +1,6 @@
 extern crate tcod;
 use std::cell::RefCell;
 
-use self::tcod::RootConsole;
-
 use game::Game;
 use rendering::RenderingComponent;
 

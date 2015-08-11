@@ -1,5 +1,4 @@
 extern crate tcod;
-use self::tcod::{Console, RootConsole, BackgroundFlag};
 use self::tcod::input::KeyCode::{Up, Down, Left, Right};
 use self::tcod::input::Key::Special;
 use self::tcod::input::KeyState;
