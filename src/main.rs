@@ -14,17 +14,19 @@ use rl::character::Character;
 use rl::npc::NPC;
 use rl::traits::{Updates, Updatable, mk_updatable};
 
-fn render<'a>(con: &mut RootConsole, objs: &Vec<Updatable<'a>>) {
+fn render<'a>(con: &mut RootConsole, npcs: &Vec<Updatable<'a>>, c: &Character) {
   con.clear();
-  for i in objs.iter() {
+  for i in npcs.iter() {
     i.borrow().render(con);
   }
+  c.render(con);
   con.flush();
 }
 
-fn update<'a>(objs: &Vec<Updatable<'a>>, keypress: KeyState, game: &Game) {
-  for i in objs.iter() {
-    i.borrow_mut().update(keypress, &game);
+fn update<'a>(npcs: &Vec<Updatable<'a>>, c: &mut Character, keypress: KeyState, game: &Game) {
+  c.update(keypress, &game);
+  for i in npcs.iter() {
+    i.borrow_mut().update(&game);
   }
 }
 
@@ -36,15 +38,16 @@ fn main() {
       max: Point { x: 79, y: 49 } },
     rng: RefCell::new(rand::thread_rng())
     };
-  let objs: Vec<Updatable> = vec![
-    mk_updatable(Character::new(40, 25, '@')),
+  let mut c = Character::new(40, 25, '@');
+  let npcs: Vec<Updatable> = vec![
     mk_updatable(NPC::new(10, 10, 'd')),
+    mk_updatable(NPC::new(40, 25, 'c')),
     ];
   let mut con = RootConsole::initializer()
     .size(game.window_bounds.max.x+1, game.window_bounds.max.y+1)
     .title("libtcod Rust tutorial")
     .init();
-  render(&mut con, &objs);
+  render(&mut con, &npcs, &c);
   while !(con.window_closed() || game.exit) {
     // wait for user input
     let keypress = con.wait_for_keypress(true);
@@ -54,9 +57,9 @@ fn main() {
       Special(Escape) => game.exit = true,
       _               => {}
     }
-    update(&objs, keypress, &game);
+    update(&npcs, &mut c, keypress, &game);
 
     // render
-    render(&mut con, &objs);
+    render(&mut con, &npcs, &c);
   }
 }

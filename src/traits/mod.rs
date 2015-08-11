@@ -1,11 +1,10 @@
 extern crate tcod;
 use self::tcod::RootConsole;
 use game::Game;
-use self::tcod::input::KeyState;
 use std::cell::RefCell;
 
 pub trait Updates {
-  fn update(&mut self, KeyState, &Game);
+  fn update(&mut self, &Game);
   fn render(&self, &mut RootConsole);
 }
 

@@ -1,7 +1,6 @@
 extern crate tcod;
 extern crate rand;
 use self::tcod::{Console, RootConsole, BackgroundFlag};
-use self::tcod::input::KeyState;
 use self::rand::distributions::{Sample, Range};
 
 use traits::Updates;
@@ -20,7 +19,7 @@ impl NPC {
 }
 
 impl Updates for NPC {
-  fn update(&mut self, _: KeyState, game: &Game){
+  fn update(&mut self, game: &Game){
     let mut between = Range::new(0, 3i32);
     let offset_x = between.sample(&mut *game.rng.borrow_mut()) - 1;
     match game.window_bounds.contains(self.position.offset_x(&offset_x)) {
