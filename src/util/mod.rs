@@ -1,18 +1,19 @@
+#[derive(Copy,Clone)]
 pub struct Point {
   pub x: i32,
   pub y: i32
 }
 
 impl Point {
-  pub fn offset_x(&self, offset: &i32) -> Point {
+  pub fn offset_x(&self, offset: i32) -> Point {
     Point { x: self.x + offset, y: self.y }
   }
 
-  pub fn offset_y(&self, offset: &i32) -> Point {
+  pub fn offset_y(&self, offset: i32) -> Point {
     Point { x: self.x, y: self.y + offset }
   }
 
-  pub fn offset(&self, offset: &Point) -> Point {
+  pub fn offset(&self, offset: Point) -> Point {
     Point { x: self.x + offset.x, y: self.y + offset.y }
   }
 }
@@ -22,6 +23,7 @@ pub enum Contains {
   DoesNotContain
 }
 
+#[derive(Copy,Clone)]
 pub struct Bound {
   pub min: Point,
   pub max: Point

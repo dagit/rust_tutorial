@@ -1,37 +1,25 @@
 extern crate tcod;
-extern crate rand;
-use self::rand::distributions::{Sample, Range};
 
 use traits::Updates;
-use util::{Point, Contains};
-use game::Game;
+use util::{Point};
 use rendering::RenderingComponent;
+use movement::MovementComponent;
 
 pub struct NPC {
   pub position: Point,
-  pub display_char: char
+  pub display_char: char,
+  pub movement_component: Box<MovementComponent>
 }
 
 impl NPC {
-  pub fn new(x: i32, y: i32, dc: char) -> NPC {
-    NPC { position: Point { x: x, y: y }, display_char: dc }
+  pub fn new(x: i32, y: i32, dc: char, mc: Box<MovementComponent>) -> NPC {
+    NPC { position: Point { x: x, y: y }, display_char: dc, movement_component: mc }
   }
 }
 
 impl Updates for NPC {
-  fn update(&mut self, game: &Game){
-    let mut between = Range::new(0, 3i32);
-    let offset_x = between.sample(&mut *game.rng.borrow_mut()) - 1;
-    match game.window_bounds.contains(self.position.offset_x(&offset_x)) {
-      Contains::DoesContain    => self.position = self.position.offset_x(&offset_x),
-      Contains::DoesNotContain => {}
-    }
-
-    let offset_y = between.sample(&mut *game.rng.borrow_mut()) - 1;
-    match game.window_bounds.contains(self.position.offset_y(&offset_y)) {
-      Contains::DoesContain    => self.position = self.position.offset_y(&offset_y),
-      Contains::DoesNotContain => {}
-    }
+  fn update(&mut self){
+    self.position = self.movement_component.update(self.position);
   }
 
   fn render(&self, rendering_component: &RenderingComponent) {

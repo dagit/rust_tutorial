@@ -1,11 +1,10 @@
 extern crate tcod;
 use std::cell::RefCell;
 
-use game::Game;
 use rendering::RenderingComponent;
 
 pub trait Updates {
-  fn update(&mut self, &Game);
+  fn update(&mut self);
   fn render(&self, &RenderingComponent);
 }
 

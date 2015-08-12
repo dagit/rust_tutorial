@@ -2,7 +2,6 @@ extern crate rand;
 extern crate tcod;
 
 use std::cell::RefCell;
-use self::rand::ThreadRng;
 
 use self::tcod::RootConsole;
 use self::tcod::input::KeyState;
@@ -12,11 +11,12 @@ use rendering::{RenderingComponent, TcodRenderingComponent};
 use traits::{Updates, Updatable};
 use character::Character;
 
+
 pub struct Game<'a> {
-  pub exit: bool,
+  pub exit: RefCell<bool>,
   pub window_bounds: Bound,
-  pub rng: RefCell<ThreadRng>,
-  pub rendering_component: Box<RenderingComponent + 'a>
+  pub rendering_component: Box<RenderingComponent + 'a>,
+  last_keypress : RefCell<Option<KeyState>>
 }
 
 impl<'a> Game<'a> {
@@ -31,10 +31,10 @@ impl<'a> Game<'a> {
       .init();
     let rc = TcodRenderingComponent { console: RefCell::new(con) };
     Game {
-      exit: false,
+      exit: RefCell::new(false),
       window_bounds: bound,
-      rng: RefCell::new(rand::thread_rng()),
-      rendering_component: Box::new(rc)
+      rendering_component: Box::new(rc),
+      last_keypress: RefCell::new(None)
     }
   }
 
@@ -49,15 +49,23 @@ impl<'a> Game<'a> {
     self.rendering_component.after_render_new_frame();
   }
 
-  pub fn update(&self, npcs: &Vec<Updatable<'a>>, c: &mut Character, keypress: KeyState) {
-    c.update(keypress, self);
+  pub fn update(&self, npcs: &Vec<Updatable<'a>>, c: &mut Character) {
+    c.update();
     for i in npcs.iter() {
-      i.borrow_mut().update(self);
+      i.borrow_mut().update();
     }
   }
 
-  pub fn wait_for_keypress(&self) -> KeyState {
-    self.rendering_component.wait_for_keypress()
+  pub fn wait_for_keypress(&self) {
+    *self.last_keypress.borrow_mut() = Some(self.rendering_component.wait_for_keypress());
+  }
+
+  pub fn get_last_keypress(&self) -> Option<KeyState> {
+    *self.last_keypress.borrow()
+  }
+
+  pub fn set_exit(&self, b: bool) {
+    *self.exit.borrow_mut() = b;
   }
 }
 
