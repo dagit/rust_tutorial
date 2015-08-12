@@ -49,10 +49,10 @@ impl<'a> Game<'a> {
     self.rendering_component.after_render_new_frame();
   }
 
-  pub fn update(&self, npcs: &Vec<Updatable<'a>>, c: &mut Character) {
+  pub fn update(&self, npcs: &Vec<Updatable<'a>>, c: &Character) {
     c.update();
     for i in npcs.iter() {
-      i.borrow_mut().update();
+      i.borrow().update();
     }
   }
 

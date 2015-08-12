@@ -4,7 +4,7 @@ use std::cell::RefCell;
 use rendering::RenderingComponent;
 
 pub trait Updates {
-  fn update(&mut self);
+  fn update(&self);
   fn render(&self, &RenderingComponent);
 }
 

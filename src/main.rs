@@ -15,7 +15,7 @@ use rl::movement::{TcodMovementComponent, RandomMovementComponent};
 fn main() {
   let game = Game::new();
   let keypress_fn = &|| game.get_last_keypress();
-  let mut c = Character::new(40, 25, '@',
+  let c = Character::new(40, 25, '@',
     Box::new(TcodMovementComponent::new(game.window_bounds, keypress_fn)));
   let npcs: Vec<Updatable> = vec![
     mk_updatable(NPC::new(10, 10, 'd',
@@ -33,7 +33,7 @@ fn main() {
         Special(Escape) => game.set_exit(true),
         _               => {}
       };
-      game.update(&npcs, &mut c);
+      game.update(&npcs, &c);
     }
     // render
     game.render(&npcs, &c);
