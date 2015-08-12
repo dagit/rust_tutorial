@@ -23,7 +23,7 @@ impl Updates for NPC {
   }
 
   fn render(&self, rendering_component: &RenderingComponent) {
-    rendering_component.render_object(&self.position, self.display_char);
+    rendering_component.render_object(self.position, self.display_char);
   }
 }
 

@@ -10,7 +10,8 @@ pub struct Character<'a> {
 
 impl <'a>Character<'a> {
   pub fn new(x: i32, y: i32, dc: char, mc: Box<MovementComponent + 'a>) -> Character<'a> {
-    Character { position: Point { x: x, y: y }, display_char: dc, movement_component: mc }
+    Character { position: Point { x: x, y: y }
+              , display_char: dc, movement_component: mc }
   }
 
   pub fn update(&mut self){
@@ -18,7 +19,7 @@ impl <'a>Character<'a> {
   }
 
   pub fn render(&self, rendering_component: &RenderingComponent){
-    rendering_component.render_object(&self.position, self.display_char);
+    rendering_component.render_object(self.position, self.display_char);
   }
 }
 

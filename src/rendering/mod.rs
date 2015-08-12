@@ -8,7 +8,7 @@ use util::Point;
 
 pub trait RenderingComponent {
   fn before_render_new_frame(&self);
-  fn render_object(&self, &Point, char);
+  fn render_object(&self, Point, char);
   fn after_render_new_frame(&self);
   fn wait_for_keypress(&self) -> KeyState;
   fn window_closed(&self) -> bool;
@@ -23,7 +23,7 @@ impl RenderingComponent for TcodRenderingComponent {
     self.console.borrow_mut().clear();
   }
 
-  fn render_object(&self, position: &Point, symbol: char) {
+  fn render_object(&self, position: Point, symbol: char) {
     self.console.borrow_mut().put_char(position.x, position.y, symbol, BackgroundFlag::Set);
   }
 
